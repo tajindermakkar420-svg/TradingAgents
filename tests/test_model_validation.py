@@ -4,6 +4,7 @@ import warnings
 import pytest
 
 from tradingagents.llm_clients.base_client import BaseLLMClient
+from tradingagents.llm_clients.capabilities import get_capabilities
 from tradingagents.llm_clients.model_catalog import get_known_models
 from tradingagents.llm_clients.validators import validate_model
 
@@ -42,6 +43,14 @@ class ModelValidationTests(unittest.TestCase):
         self.assertEqual(len(caught), 1)
         self.assertIn("not-a-real-openai-model", str(caught[0].message))
         self.assertIn("openai", str(caught[0].message))
+
+    def test_case_insensitive_model_names_are_accepted(self):
+        self.assertTrue(validate_model("MiniMax", "minimax-m2.7"))
+        self.assertTrue(validate_model("deepseek", "DeepSeek-V4-Flash"))
+
+    def test_case_insensitive_capabilities_match_runtime_variants(self):
+        self.assertTrue(get_capabilities("DeepSeek/DeepSeek-V4-Flash").requires_reasoning_content_roundtrip)
+        self.assertTrue(get_capabilities("MINIMAX-M3").requires_reasoning_split)
 
     def test_openrouter_and_ollama_accept_custom_models_without_warning(self):
         for provider in ("openrouter", "ollama"):
